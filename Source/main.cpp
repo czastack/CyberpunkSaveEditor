@@ -43,6 +43,7 @@ protected:
 	csav_list_widget csav_list;
 
 	archive_test archtest;
+	nlohmann::json language;
 
 public:
 	CPSEApp()
@@ -66,6 +67,7 @@ protected:
 
 		// Setup Dear ImGui style
 		load_style();
+		load_language();
 
 		// Load Fonts
 		// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -81,6 +83,24 @@ protected:
 		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 		//IM_ASSERT(font != NULL);
+
+		io.Fonts->AddFontDefault();
+
+		ImFont* font = NULL;
+		const char* fonts[] = { "font.ttf",  "C:\\WINDOWS\\Fonts\\DENG.TTF" };
+		for (const char* path : fonts)
+		{
+			if (!std::filesystem::exists(path))
+			{
+				continue;
+			}
+			font = io.Fonts->AddFontFromFileTTF(path, 18.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
+			if (font != NULL)
+			{
+				io.FontDefault = font;
+				break;
+			}
+		}
 	}
 
 	bool load_style()
@@ -141,6 +161,24 @@ protected:
 		return false;
 	}
 
+	bool load_language()
+	{
+		try
+		{
+			std::ifstream file;
+			file.open("language/zh_cn.json");
+			file >> language;
+			file.close();
+
+			return true;
+		}
+		catch (std::exception& e)
+		{
+
+		}
+		return false;
+	}
+
 	void cleanup() override
 	{
 		store_style();
@@ -173,20 +211,22 @@ protected:
 			{
 				csav_list.draw_menu_item(this);
 
-				if (ImGui::BeginMenu("Options"))
+				std::string text;
+				language["Options"].get_to(text);
+				if (ImGui::BeginMenu(text.c_str()))
 				{
-					imgui_style_editor |= ImGui::MenuItem("ui style editor", 0, false);
+					imgui_style_editor |= ImGui::MenuItem(u8"样式编辑器", 0, false);
 					ImGui::EndMenu();
 				}
 
-				if (ImGui::BeginMenu("Dev"))
+				if (ImGui::BeginMenu(u8"开发"))
 				{
 					if (ImGui::MenuItem("imgui demo", 0, false))
 						imgui_demo = true;
 					ImGui::EndMenu(); 
 				}
 
-				if (ImGui::BeginMenu("About"))
+				if (ImGui::BeginMenu(u8"关于"))
 				{
 					ImGui::Separator();
 					ImGui::Text(credits.c_str());
